@@ -5,7 +5,7 @@ def get_bsadf(logP, minSL, constant, lags):
         y_,x_ = y[start:],x[start:]
         bMean_,bStd_ = getBetas(y_,x_)
         bMean_,bStd_ = bMean_[0,0],bStd_[0,0]**.5
-        allADF.append(bMean_/bStd_)
+        allADF.append(bMean_/bStd_)  # look at the t-stats of ADF regression
         if allADF[-1] > bsadf: 
             bsadf = allADF[-1]
     out = {'Time':logP.index[-1],'gsadf':bsadf}
