@@ -10,3 +10,5 @@ def get_bsadf(logP, minSL, constant, lags)
             bsadf = allADF[-1]
     out = {'Time':logP.index[-1],'gsadf':bsadf}
     return out
+
+
