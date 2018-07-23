@@ -1,0 +1,12 @@
+def get_bsadf(logP, minSL, constant, lags)
+    y,x = getYX(logP, constant = constant, lags = lags)
+    startPoints, bsadf, allADF = range(0,y.shape[0] + lags - minSL+1),None,[]
+    for start in startPoints
+        y_,x_ = y[start:],x[start:]
+        bMean_,bStd_ = getBetas(y_,x_)
+        bMean_,bStd_ = bMean_[0,0],bStd_[0,0]**.5
+        allADF.append(bMean_/bStd_)
+        if allADF[-1] > bsadf: 
+            bsadf = allADF[-1]
+    out = {'Time':logP.index[-1],'gsadf':bsadf}
+    return out
