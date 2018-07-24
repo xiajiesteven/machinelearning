@@ -31,12 +31,13 @@ def getQuasiDiag(link):
         sortIx.index = range(sortIx.shape[0]) 
     return sortIx.tolist()
 
+
 def getRecBipart(cov,sortIx):
     w = pd.Series(1,index = sortIx)
     cItems = [sortIx]
     while len(cItems) > 0:
-        cItems = [i[j:k] for i in cItems for j,k in ((0,len(i)/2),(len(i)/2,len(i))) if len(i)>1]
-        for i in xrange(0,len(cItems),2):
+        cItems = [i[j:k] for i in cItems for j,k in ((0,len(i)/2),(len(i)/2,len(i))) if len(i)>1] # for each item i in cItems , we bisect the item i.
+        for i in xrange(0,len(cItems),2):  # step size = 2 . In one iteration, we deal with two indices i and i+1
             cItems0 = cItems[i] 
             cItems1 = cItems[i+1] 
             cVar0 = getClusterVar(cov,cItems0)
@@ -45,3 +46,19 @@ def getRecBipart(cov,sortIx):
             w[cItem0] *= alpha
             w[cItem1] *= 1 - alpha
     return w
+
+def correlDist(corr):
+    dist = ((1-corr)/2.)**.5 #distance matrix
+    return dist
+
+def generateData(nObs, size0,size1,sigma1):
+    np.random.seed(seed = 12345)
+    random.seed(12345)
+    x = np.random.normal(0,1,size=(nObs,size0))
+    
+    cols = [random.randint(0,size0-1) for i in xrange(size1)]
+    y = x[:,cols] + np.random.normal(0,sigma1,size=(nObs,len(cols)))
+    x = np.append(x,y,axis=1)
+    
+    x = pd.DataFrame(x, columns = range(1,x.shape[1]+1))
+    return x,cols
