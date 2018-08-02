@@ -1,4 +1,5 @@
 # implement PCA to obtain the othogonal feature
+# We can compare the eigenvalue associated to an eigenvector (ignore the labelling information) with the MDI score of the feature associated to the eigenvector (using labelling information). 
 
 def get_eVec(dot,varThres):
     # compute eVec from dot prod matrix, reduce dimension 
