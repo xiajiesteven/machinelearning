@@ -1,3 +1,6 @@
+# RF trains independently individual estimators over bootstrapped subsets of the data. 
+# When optimizing each node split, only a random subsample of the attributes will be evaluated.
+
 clf0 = RandomForestClassifier(n_estimator = 1000, class_weight = 'balanced_subsample',criterion = 'entropy' )
 # balanced_subsample class weight means weights inversely proportional to the class frequency in the bootstrap sample for every tree grown.
 
