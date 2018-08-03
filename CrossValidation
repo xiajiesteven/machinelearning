@@ -1,0 +1,40 @@
+
+
+def getTrainTimes(t1,testTimes):
+    # given testTimes, find the times of the training observations. 
+    # t1.index: Time when the observation started
+    # t1.value: Time when the observation ended
+    # testTimes: Times of testing observations 
+    trn = t1.copy(deep = True )
+    for i,j in testTimes.iteritems():
+        df0 = trn[(i<=trn.index)&(trn.index <= j)].index # train starts within test
+        df1 = trn[(i<=trn)&(trn<=j)].index # train ends within test
+        df2 = trn[(trn.index <= i)&(j<=trn)].index # train envelop test
+        trn = trn.drop(df0.union(df1).union(df2))
+    return trn
+
+def getEmbargoTimes(times,pctEmbargo):
+    # Get embargo time for each bar
+    step = int(times.shape[0] * pctEmbargo)
+    if step == 0:
+        mbrg = pd.Series(times,index = times)
+    else:
+        mbrg = pd.Series(times[step:],index = times[:-step])
+        mbrg = mbrg.append(pd.Series(times[-1],index = times[-step:]))
+    return mbrg
+            
+
+class PurgedKFold(_BaseKFold):
+    # Extend KFold class to work with labels that span intervals 
+    # The train is purged of obervation overlapping test-label intervals
+    # Test set is assumed continous without training sample 
+    
+    def _init_(self,n_splits = 3, t1=None, pctEmbargo = 0.):
+        if not isinstance(t1,pd.Series):
+            raise ValueError('Label Through Dates must be a pd.Series')
+        super(PurgedKFold,self)._init_(n_splits, shuffle = False, random_state = None)
+        self.t1 = t1
+        self.pctEmbargo = pctEmbargo
+        
+   def split(self,X,y=None, groups = None):
+        if (X.index == self.t1.index)
