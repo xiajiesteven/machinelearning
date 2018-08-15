@@ -4,6 +4,8 @@
 #    stepSize: a double
 #    prob: a matrix with size = events.index  * 1. Each entry = max(output from ML classification algorithm, a numClass * 1 vector)
 #    numClasses: the number of classes out of the ML algorithm, an int
+# Outputs:
+#   signal1 is the average bet size of the asset/portfolio. Mathematically it's 2* norm.cdf(signal0) - 1
 
 def getSignal(events, stepSize,prob,pred,numClasses,numThreads,**kargs):
     if prob.shape[0] == 0:
@@ -41,3 +43,10 @@ def mpAvgActiveSignals(signals,molecule):
         else:
             out[loc] = 0 # no signals active at this time
     return out
+
+def discreteSignal(signal0, stepSize):
+    # discretize signal
+    signal1 = (signal0/stepSize).round() * stepSize # discretize 
+    signal1[signal1 > 1] = 1
+    signal1[signal1 < -1] = -1
+    return signal1
