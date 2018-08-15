@@ -1,13 +1,49 @@
-#
+# Inputs:
+# close: A pandas series of prices
+# tEvents: A pandas timeindex of starting timestamps for each sample. It could be the time of structural break or some events. 
+# ptSl: A non-negative float that sets the width of the two barriers. A 0 value means that the repective horizontal barrier (profit taking or stop loss) will be disabled.
+# t1: A pandas series with timestamps of the vertical barriers. We pass a False when we want to disable vertical barriers
+# trgt: A pandas series of targets, expressed in terms of absolute returns. 
+# minRet: The minimum target return required for running a triple barrier search.
+# numThreads: The number of threads concurrently used by the function. 
+# side: the side of bet , 1 or -1. 
+
+#Output: events -- a pandas dataframe with column = t1 ( the termination time), 
+                                                # = trgt ( absolute return target)
+
+def getEvents(close,tEvents,ptSl,trgt,minRet,numThreads,t1=False,side = None):
+    #1) get target
+    trgt = trgt.loc[tEvents]
+    trgt = trgt[trgt>minRet] # the minimal return
+    #2) get t1 (max holding period)
+    if t1 is False:
+        t1 = pd.Series(pd.NaT, index = tEvents)
+    #3) form events object, apply stop loss on t1
+    if side is None: 
+        side_,ptSl_ = pd.Series(1.,index = trgt.index),[ptSl[0],ptSl[1]] # if no side is provided, then by default side_ is set to be 1
+    else:
+        side_,ptSl_ = side.loc[trgt.index],ptSl[:2] 
+    events = pd.concat({'t1':t1, 'trgt':trgt,'side':side},axis = 1).dropna(subset=['trgt'])
+    df0 = mpPandasObj(func = applyPtSlOnT1, pdObj = ('molecule',events.index),numThreads = numThreads,close = close, events = events,ptSl = ptSl_)
+    events['t1'] = df0.dropna(how = 'all').min(axis = 1) #pd.min ignores nan
+    if side is None:
+        events = events.drop('side',axis = 1)
+    return events
+
+
+#Inputs:
 # close: A pandas series of prices
 # events: A pd dataframe , with columns
     # t1: the vertical barrier 
-    # trgt: unit width of the horizontal barrier
+    # trgt: unit width of the horizontal barrier, expressed in terms of absolute returns
     # side: 1 or -1
 # ptSl: a list of two non-negative float values
     # ptSl[0] the factor that multiplies trgt to set the width of the upper barrier 
     # ptSl[1] the factor that multiplies trgt to set the width of the lower barrier 
 
+# Outputs:
+    # out is a Pandas DataFrame with columns: t1, sl and pt
+    
 def applyPtSlOnT1(close, events,ptSl,molecule):
     # apply stop lose/profit taking, if it takes place before t1 (end of event)
     events_ = events.loc[molecule]
