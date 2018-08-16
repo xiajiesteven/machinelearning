@@ -9,8 +9,8 @@
 # side: the side of bet , 1 or -1. 
 
 #Output: events -- a pandas dataframe with column = t1 ( the termination time), 
-                                                # = trgt ( absolute return target)
-
+                                                # = trgt ( absolute return target that is used to generate the horizontal barriers)
+#                                     with index = events' starting time
 def getEvents(close,tEvents,ptSl,trgt,minRet,numThreads,t1=False,side = None):
     #1) get target
     trgt = trgt.loc[tEvents]
@@ -61,4 +61,34 @@ def applyPtSlOnT1(close, events,ptSl,molecule):
         df0 = (df0/close[loc]-1) * events_.at[loc,'side'] # path returns
         out.loc[loc,'sl'] = df0[df0 < sl[loc]].index.min()
         out.loc[loc,'pt'] = df0[df0 > pt[loc]].index.min()
+    return out
+
+  # Adding a vertical barrier = a certain number of days after the starting time 
+
+t1 = close.index.searchsorted(tEvents + pd.Timedelta(days = numDays)) # tEvents is the series of the starting time , close.index is also a series of time
+t1 = t1[t1 < close.shape[0]] # truncated by the length of closed price series 
+t1 = pd.Series(close.index[t1],index = tEvents[:t1.shape[0]])
+
+# getBins: 
+# Inputs: 
+#   events: dataframe as the output from getEvents 
+#   close: a pandas series of close prices 
+# Outputs:
+#   a dataframe with columns:
+#      ret: the return realized at the time of the first touched barrier
+#      bin: The label, {-1,0,1}, as the function of the sign of the outcomes.
+
+def getBins(events,close):
+    #1) prices aligned with events 
+    events_ = events.dropna(subset=['t1'])
+    px = events_.index.union(events_['t1'].values).drop_duplicates()
+    px = close.reindex(px, method = 'bfill') #use the next valid observation to fill gap
+    #2) create out object 
+    out = pd.DataFrame(index = events_.index)
+    out['ret'] = px.loc[events_['t1'].values].values/px.loc[events_.index]-1
+    if 'side' in events_:
+        out['ret'] *= events_['side']
+    out['bin'] = np.sign(out['ret'])
+    if 'side' in events_:
+        out.loc[out['ret']<=0,'bin'] =0 
     return out
