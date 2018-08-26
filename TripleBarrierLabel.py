@@ -11,6 +11,9 @@
 #Output: events -- a pandas dataframe with column = t1 ( the termination time), 
                                                 # = trgt ( absolute return target that is used to generate the horizontal barriers)
 #                                     with index = events' starting time
+# This function takes in side as an argument. When side is not None, then it is a multi-labelling and argument ptsl is a list of two 
+# non-negative float numbers -- we discriminate between profit taking and stop loss. 
+
 def getEvents(close,tEvents,ptSl,trgt,minRet,numThreads,t1=False,side = None):
     #1) get target
     trgt = trgt.loc[tEvents]
