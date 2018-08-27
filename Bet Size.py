@@ -2,7 +2,8 @@
 # inputs:
 #    events: a matrix of data, with column = meta-labelling estimator, or a standard labeling estimator.
 #    stepSize: a double
-#    prob: a matrix with size = events.index  * 1. Each entry = max(output from ML classification algorithm, a numClass * 1 vector)
+#    prob: a matrix with size = events.index  * 1. Each entry = max of output from ML classification algorithm (a numClass * 1 vector)
+#    pred: a matrix with size = events.index * 1. Each entry is the bet size corresponding to prob variable above.  
 #    numClasses: the number of classes out of the ML algorithm, an int
 # Outputs:
 #   signal1 is the average bet size of the asset/portfolio. Mathematically it's 2* norm.cdf(signal0) - 1
@@ -11,7 +12,7 @@ def getSignal(events, stepSize,prob,pred,numClasses,numThreads,**kargs):
     if prob.shape[0] == 0:
         return pd.Series()
     #1) generate signals from one-vs-rest classification 
-    signal0 = (prob - 1./numClasses)/(prob*(1.-prob))**.5 # t-value of OvR, a vector operation 
+    signal0 = (prob - 1./numClasses)/(prob*(1.-prob))**.5 # t-value of One versus Rest, a vector operation. Not all singal0 is greater than 0, since prob > 1/numClasses
     signal0 = pred *(2*norm.cdf(singal0)-1)  # compute the bet size 
     # signal0.index = events.index
     if 'side' in events:
