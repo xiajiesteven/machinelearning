@@ -1,4 +1,11 @@
 # We implement the Supreme ADF test 
+# Inputs:
+#    logP: a pd Series containing log prices
+#    minSL: the minimal sample length used by the final regression 
+#    constant: the regression's time trden component : 'nc' (no time trend),'ct'(first degree),'ctt' (constant + second-degree polynomial)
+#    lags: the number of lags used in ADF specification
+
+# Output: the supreme of ADF t-stats. It follows DF distribution. The null hypothesis is t=0 (random walk), the alternative is t<0 (statioinary) or t>0(momentum).
 
 def get_bsadf(logP, minSL, constant, lags):
     y,x = getYX(logP, constant = constant, lags = lags)
