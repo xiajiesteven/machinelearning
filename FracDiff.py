@@ -31,3 +31,32 @@ def getWeight(d,size):
     w = np.array(w[::-1]).reshape(-1,1)
     return x
     
+# define a fraction differential with fixed width
+# we truncate the weights w by a threshold 
+# Inputs:
+#      thres: determines the cut-off weight for the window 
+
+def fracDiff_FFD(series, d, thres = 1e-5):
+    w = getWeights_FFD(d,thres)
+    width = len(w)-1
+    df={}
+    for name in series.columns:
+        seriesF,df_ = series[[name]].fillna(method = 'ffill').dropna(),pd.Series()
+        for iloc1 in range(width,seriesF.shape[0]):
+            loc0,loc1 = seriesF.index[iloc1-width],seriesF.index[iloc]
+            if not np.isfinite(series.loc[loc1 ,name]):
+                continue
+            df_[loc1] = np.dot(w.T,seriesF.loc[loc0:loc1])[0,0]
+        df[name] = df_.copy(deep = true)
+    df = pd.concat(df,axis = 1)
+    return df
+
+def getWeights_FFD(d,thres):
+    w=[1.]
+    k = 1.0
+    while -w[-1]/k*(d-k+1)<thres:
+        w.append(-w[-1]/k*(d-k+1))
+        k = k+1
+        
+    w = np.array(w[::-1]).reshape(-1,1)
+    return w
