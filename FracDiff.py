@@ -60,3 +60,22 @@ def getWeights_FFD(d,thres):
         
     w = np.array(w[::-1]).reshape(-1,1)
     return w
+
+
+def plotMinFFD():
+    from statsmodels.tsa.stattools import adfuller
+    path,instName ='./','ES1_Index_Method12'
+    out = pd.DataFrame(columns=['adfStat','pVal','lags','nObs','95% conf','corr'])
+    df0 = pd.read_csv(path+instName +'.csv',index_col = 0,parse_dates =True)
+    for d in np.linspace(0,1,11):
+        df1 = np.log(df0[['Close']]).resample('1D').last() # downcast to daily ones
+        df2 = fracDiff_FFD(df1,d,thres = 0.01)
+        corr = np.corrcoef(df1.loc[df2.index,'Close'],df2['Close'])[0,1] # compute the correlation between the original series and finite different series
+        df2 = adfuller(df2['Close'],maxlag = 1,regression = 'c',autolag=None) # here 'c' means constant only 
+        out.loc[d] = list(df2[:4]) + [df2[4]['5%']] + [corr] # with cricical value
+    out.to_csv(path + instName + '_testMinFFD.csv')
+    out[['adfStat','corr']].plot(secondary_y='adfStat')
+    out[['adfStat','corr']].plot(secondary_y='adfStat')
+    mpl.axhline(out['95% conf'].mean(),linewidth = 1, color = 'r',linestyle = 'dotted')
+    return
+    
